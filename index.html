@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guess Master</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #080d1c;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.game {
+    width: 90%;
+    max-width: 430px;
+    padding: 30px 25px;
+    border: 1px solid #263b70;
+    border-radius: 22px;
+    background: #111a32;
+    text-align: center;
+    box-shadow: 0 0 35px #1646a333;
+}
+
+h1 {
+    color: #55d9ff;
+    font-size: 32px;
+    letter-spacing: 3px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    color: #aab7d5;
+    margin-bottom: 25px;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin: 25px 0;
+}
+
+.stat {
+    background: #1c2948;
+    padding: 12px;
+    border-radius: 12px;
+    width: 45%;
+}
+
+.stat p {
+    color: #aab7d5;
+    font-size: 13px;
+}
+
+.stat h2 {
+    color: #55d9ff;
+    margin: 5px;
+}
+
+select, input, button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+select, input {
+    background: #202e4d;
+    color: white;
+    border: 1px solid #40527b;
+}
+
+button {
+    background: #00bfff;
+    color: #071322;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background: #65ddff;
+    transform: scale(1.02);
+}
+
+#message {
+    min-height: 30px;
+    color: #55d9ff;
+    font-weight: bold;
+    margin-top: 18px;
+}
+
+#sound {
+    background: #263653;
+    color: white;
+}
+
+.footer {
+    color: #8291b4;
+    font-size: 12px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <h1>🎯 GUESS MASTER</h1>
+    <p class="subtitle">Think Smart. Guess Right. Win Big!</p>
+
+    <select id="difficulty" onchange="newGame()">
+        <option value="10">Easy (1-10)</option>
+        <option value="50">Medium (1-50)</option>
+        <option value="100" selected>Hard (1-100)</option>
+    </select>
+
+    <div class="stats">
+        <div class="stat">
+            <p>ATTEMPTS</p>
+            <h2 id="attempts">0</h2>
+        </div>
+
+        <div class="stat">
+            <p>BEST SCORE</p>
+            <h2 id="best">0</h2>
+        </div>
+    </div>
+
+    <p id="range">Guess a number between 1 and 100</p>
+
+    <input
+        type="number"
+        id="guess"
+        placeholder="Enter your guess..."
+        min="1"
+        max="100"
+    >
+
+    <button onclick="checkGuess()">SUBMIT GUESS</button>
+
+    <p id="message">Let's start playing! 🚀</p>
+
+    <button onclick="newGame()">🔄 NEW GAME</button>
+
+    <button id="sound" onclick="toggleSound()">🔊 Sound: ON</button>
+
+    <p class="footer">Made with ❤️ by Nikhil</p>
+
+</div>
+
+<script>
+
+let secret;
+let attempts;
+let max;
+let soundOn = true;
+
+let best = Number(localStorage.getItem("guessMasterBest")) || 0;
+document.getElementById("best").innerText = best;
+
+function newGame() {
+
+    max = Number(document.getElementById("difficulty").value);
+
+    secret = Math.floor(Math.random() * max) + 1;
+
+    attempts = 0;
+
+    document.getElementById("attempts").innerText = 0;
+    document.getElementById("guess").value = "";
+    document.getElementById("guess").max = max;
+
+    document.getElementById("range").innerText =
+        `Guess a number between 1 and ${max}`;
+
+    document.getElementById("message").innerText =
+        "Let's start playing! 🚀";
+
+}
+
+function beep(frequency) {
+    if (!soundOn) return;
+
+    const audio = new AudioContext();
+    const oscillator = audio.createOscillator();
+
+    oscillator.frequency.value = frequency;
+    oscillator.connect(audio.destination);
+    oscillator.start();
+
+    oscillator.stop(audio.currentTime + 0.15);
+}
+
+function checkGuess() {
+
+    let input = document.getElementById("guess");
+    let guess = Number(input.value);
+
+    if (input.value === "" || !Number.isInteger(guess) ||
+        guess < 1 || guess > max) {
+
+        document.getElementById("message").innerText =
+            `Enter a valid number between 1 and ${max}!`;
+
+        return;
+    }
+
+    attempts++;
+
+    document.getElementById("attempts").innerText = attempts;
+
+    if (guess === secret) {
+
+        let score = Math.max(10, max * 10 - attempts * 5);
+
+        document.getElementById("message").innerText =
+            `🏆 CORRECT! You won ${score} points!`;
+
+        if (score > best) {
+            best = score;
+            localStorage.setItem("guessMasterBest", best);
+            document.getElementById("best").innerText = best;
+        }
+
+        beep(900);
+
+    } else if (guess < secret) {
+
+        document.getElementById("message").innerText =
+            "⬆ Too LOW! Try a bigger number.";
+
+        beep(300);
+
+    } else {
+
+        document.getElementById("message").innerText =
+            "⬇ Too HIGH! Try a smaller number.";
+
+        beep(200);
+
+    }
+
+    input.value = "";
+}
+
+function toggleSound() {
+
+    soundOn = !soundOn;
+
+    document.getElementById("sound").innerText =
+        soundOn ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+
+}
+
+document.getElementById("guess").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") checkGuess();
+});
+
+newGame();
+
+</script>
+
+</body>
+</html>
